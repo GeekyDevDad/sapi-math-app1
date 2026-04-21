@@ -104,4 +104,19 @@ else:
         
         total_over = sum(over_list)
         st.markdown(f"""
-        1. 一番少ない **{m_name}** を $\\square$ とおいて、全員を左に
+        1. 一番少ない **{m_name}** を $\\square$ とおいて、全員を左に揃えよう。
+        2. 全員の「はみ出し」を合計すると： **{total_over}{q['unit']}**
+        3. 全体から引くと、$\\square$ が3個分になるよ： {q['total']} - {total_over} = **{q['total'] - total_over}**
+        4. $\\square$ （{m_name}） ＝ {q['total'] - total_over} ÷ 3 = **{m_val}{q['unit']}**
+        """)
+        
+        if q['target'] != m_name:
+            st.write(f"5. 最後に聞かれている **{q['target']}** を計算： {m_val} + {q['ans'] - m_val} = **{q['ans']}{q['unit']}**")
+
+    if st.session_state.answered:
+        if st.button("次のレベルへ"):
+            st.session_state.step += 1
+            if st.session_state.step <= 5:
+                st.session_state.q = generate_stepped_problem(st.session_state.step)
+            st.session_state.answered = False
+            st.rerun()
