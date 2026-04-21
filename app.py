@@ -1,90 +1,67 @@
 import streamlit as st
 import random
 
-def generate_dynamic_wasazan():
-    # 📝 4つのシチュエーション設定（ポケモンゲットを追加）
-    scenarios = [
-        {
-            "category": "👤 登場人物",
-            "names": ["サトシ君", "ゴウ君", "かすみちゃん"],
-            "unit": "枚", "item": "カード"
-        },
-        {
-            "category": "🐭 ポケモンゲット（新！）",
-            "names": ["サトシ君", "ごう君", "かすみちゃん"],
-            "unit": "匹", "item": "ゲットしたポケモン"
-        },
-        {
-            "category": "🍓 大好きな果物",
-            "names": ["あまおう", "完熟マンゴー", "シャインマスカット"],
-            "unit": "個", "item": "数"
-        },
-        {
-            "category": "🍴 定食屋のメニュー",
-            "names": ["特製ラザニア", "厚切り焼魚定食", "欲張り唐揚げ定食"],
-            "unit": "円", "item": "お値段"
-        }
-    ]
+def generate_complex_wasazan():
+    # シチュエーション（ポケモンゲットに固定）
+    names = ["サトシ君", "かすみちゃん", "ごう君"]
+    # 難易度調整：サトシを最小にする
+    satoshi = random.randint(15, 40)
+    diff_sk = random.randint(15, 40) # サトシとカスミの差
+    diff_kg = random.randint(10, 30) # カスミとゴウの差
     
-    scene = random.choice(scenarios)
-    names = scene["names"].copy()
-    random.shuffle(names)
+    kasumi = satoshi + diff_sk
+    gou = kasumi + diff_kg
+    total = satoshi + kasumi + gou
     
-    # 🧮 数値と条件（多い・少ない）の決定
-    d1 = random.randint(5, 40)
-    d2 = random.randint(5, 40)
-    
-    # 「少ない」が出てもマイナスにならないよう最小値を調整
-    base = random.randint(45, 100) 
-    
-    # 条件のランダム決定 ("多い" または "少ない")
-    cond1 = random.choice(["多い", "少ない"])
-    cond2 = random.choice(["多い", "少ない"])
-    
-    # 各値を計算 (names[2] を基準にする)
-    val2 = base
-    val1 = val2 + d2 if cond2 == "多い" else val2 - d2
-    val0 = val1 + d1 if cond1 == "多い" else val1 - d1
-    
-    total = val0 + val1 + val2
-    
-    return scene, names, total, d1, d2, cond1, cond2, val0, val1, val2
+    return names, total, diff_sk, diff_kg, satoshi, kasumi, gou
 
-st.set_page_config(page_title="Geeky.a.Dad's Lab", page_icon="🔢")
-st.title("🔢 3人の和差算：サトシ＆ポケモンVer.")
+st.set_page_config(page_title="Geeky.a.Dad's Lab", page_icon="🐭")
+st.title("🔢 ポケモン算数：線分図ハック")
 
 if 'q_data' not in st.session_state:
-    st.session_state.q_data = generate_dynamic_wasazan()
+    st.session_state.q_data = generate_complex_wasazan()
 
-scene, names, total, d1, d2, c1, c2, v0, v1, v2 = st.session_state.q_data
+names, total, d_sk, d_kg, v_s, v_k, v_g = st.session_state.q_data
 
-st.subheader(f"今回のテーマ：{scene['category']}")
 st.info(f"""
-{names[0]}、{names[1]}、{names[2]} の{scene['item']}を全部合わせると **{total}{scene['unit']}** です。
+{names[0]}、{names[1]}、{names[2]} のゲットしたポケモンを合わせると **{total}匹** です。
 
-・{names[0]} は {names[1]} より **{d1}{scene['unit']} {c1}** です。
-・{names[1]} は {names[2]} より **{d2}{scene['unit']} {c2}** です。
+・{names[0]} は {names[1]} より **{d_sk}匹 少ない** です。
+・{names[1]} は {names[2]} より **{d_kg}匹 少ない** です。
 
-このとき、**{names[0]}** は何{scene['unit']}ですか？
+このとき、**{names[0]}** は何匹ですか？
 """)
 
-if st.button("ヒント（線分図）と解説を見る"):
-    st.markdown("**【パパのロジカル解説】**")
+user_input = st.number_input("サトシ君の数を入力:", min_value=0, step=1)
+
+if st.button("判定 ＆ パパのロジカル解説"):
+    if user_input == v_s:
+        st.success("✨ 正解！完璧な理解だね。")
+    else:
+        st.error(f"惜しい！正解は {v_s}匹 でした。")
     
-    # 簡易線分図の描画
+    st.write("---")
+    st.subheader("📊 左揃えの線分図で見ると？")
+    
+    # 左揃えの視覚的表現
     st.code(f"""
-    {names[0]}: {"-" * (v0//5)} ({v0}{scene['unit']})
-    {names[1]}: {"-" * (v1//5)} ({v1}{scene['unit']})
-    {names[2]}: {"-" * (v2//5)} ({v2}{scene['unit']})
+    サトシ: |----------| (□匹)
+    かすみ: |----------|---{d_sk}---| (□ + {d_sk}匹)
+    ごう　: |----------|---{d_sk}---|---{d_kg}---| (□ + {d_sk + d_kg}匹)
     """)
     
-    min_val = min(v0, v1, v2)
-    over = total - (min_val * 3)
+    st.markdown(f"""
+    **【解説】一番少ないサトシ君を $\square$ とすると：**
+    1. かすみちゃんは、サトシより **{d_sk}匹** 多い。
+    2. ごう君は、かすみよりさらに {d_kg}匹 多いので、サトシより **{d_sk + d_kg}匹** 多い。
+    3. 全員の合計は、$(\square \\times 3) + {d_sk} + {d_sk + d_kg} = {total}$ になるね！
     
-    st.write(f"1. 一番少ない数に合わせて、ハミ出している分（合計 {over}{scene['unit']}）を全体から引きます。")
-    st.write(f"2. {total} - {over} = {total - over} （これが一番少ない人の3倍です）")
-    st.success(f"結果： **{names[0]} は {v0}{scene['unit']}** です！")
+    **計算：**
+    - はみ出しの合計：${d_sk} + {d_sk + d_kg} = {d_sk + d_sk + d_kg}$ 
+    - $\square \\times 3 = {total} - {d_sk + d_sk + d_kg} = {total - (d_sk + d_sk + d_kg)}$
+    - $\square = {total - (d_sk + d_sk + d_kg)} \\div 3 = {v_s}$ 匹！
+    """)
 
-if st.button("次の問題を生成（シチュエーションも変更）"):
-    st.session_state.q_data = generate_dynamic_wasazan()
+if st.button("次の問題へ"):
+    st.session_state.q_data = generate_complex_wasazan()
     st.rerun()
