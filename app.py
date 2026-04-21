@@ -13,8 +13,8 @@ def generate_wasazan_3_random():
         {
             "category": "👤 登場ポケモン",
             "names": ["ピカチュウ", "ニャース", "ゲンガー"],
-            "unit": "枚",
-            "item": "カード"
+            "unit": "匹",
+            "item": "捕まえた数"
         },
         {
             "category": "🍎 果物",
