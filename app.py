@@ -1,82 +1,90 @@
 import streamlit as st
 import random
 
-def generate_wasazan_3_random():
-    # 3つのシチュエーション設定
+def generate_dynamic_wasazan():
+    # 📝 4つのシチュエーション設定（ポケモンゲットを追加）
     scenarios = [
         {
             "category": "👤 登場人物",
-            "names": ["A君", "B君", "C君"],
-            "unit": "枚",
-            "item": "カード"
+            "names": ["サトシ君", "ゴウ君", "かすみちゃん"],
+            "unit": "枚", "item": "カード"
         },
         {
-            "category": "🍎 果物",
-            "names": ["リンゴ", "みかん", "バナナ"],
-            "unit": "個",
-            "item": "数"
+            "category": "🐭 ポケモンゲット（新！）",
+            "names": ["サトシ君", "ごう君", "かすみちゃん"],
+            "unit": "匹", "item": "ゲットしたポケモン"
         },
         {
-            "category": "🍱 定食屋",
-            "names": ["ハンバーグ定食", "焼魚定食", "唐揚げ定食"],
-            "unit": "円",
-            "item": "値段"
+            "category": "🍓 大好きな果物",
+            "names": ["あまおう", "完熟マンゴー", "シャインマスカット"],
+            "unit": "個", "item": "数"
+        },
+        {
+            "category": "🍴 定食屋のメニュー",
+            "names": ["特製ラザニア", "厚切り焼魚定食", "欲張り唐揚げ定食"],
+            "unit": "円", "item": "お値段"
         }
     ]
     
     scene = random.choice(scenarios)
-    names = scene["names"]
-    random.shuffle(names) # A, B, Cの役割もランダムに入れ替え
+    names = scene["names"].copy()
+    random.shuffle(names)
     
-    # 数値計算
-    diff_1 = random.randint(5, 30)
-    diff_2 = random.randint(5, 30)
-    base = random.randint(20, 100)
+    # 🧮 数値と条件（多い・少ない）の決定
+    d1 = random.randint(5, 40)
+    d2 = random.randint(5, 40)
     
-    # 3つの値を計算（cを最小とする）
-    c_val = base
-    b_val = c_val + diff_2
-    a_val = b_val + diff_1
-    total = a_val + b_val + c_val
+    # 「少ない」が出てもマイナスにならないよう最小値を調整
+    base = random.randint(45, 100) 
     
-    return scene, names, total, diff_1, diff_2, a_val, b_val, c_val
+    # 条件のランダム決定 ("多い" または "少ない")
+    cond1 = random.choice(["多い", "少ない"])
+    cond2 = random.choice(["多い", "少ない"])
+    
+    # 各値を計算 (names[2] を基準にする)
+    val2 = base
+    val1 = val2 + d2 if cond2 == "多い" else val2 - d2
+    val0 = val1 + d1 if cond1 == "多い" else val1 - d1
+    
+    total = val0 + val1 + val2
+    
+    return scene, names, total, d1, d2, cond1, cond2, val0, val1, val2
 
 st.set_page_config(page_title="Geeky.a.Dad's Lab", page_icon="🔢")
-st.title("🔢 3人の和差算：変幻自在Ver.")
+st.title("🔢 3人の和差算：サトシ＆ポケモンVer.")
 
 if 'q_data' not in st.session_state:
-    st.session_state.q_data = generate_wasazan_3_random()
+    st.session_state.q_data = generate_dynamic_wasazan()
 
-scene, names, total, d1, d2, a, b, c = st.session_state.q_data
+scene, names, total, d1, d2, c1, c2, v0, v1, v2 = st.session_state.q_data
 
 st.subheader(f"今回のテーマ：{scene['category']}")
 st.info(f"""
-{names[0]}、{names[1]}、{names[2]}の{scene['item']}を合わせると **{total}{scene['unit']}** です。
-・{names[0]} は {names[1]} より **{d1}{scene['unit']}** 多いです。
-・{names[1]} は {names[2]} より **{d2}{scene['unit']}** 多いです。
+{names[0]}、{names[1]}、{names[2]} の{scene['item']}を全部合わせると **{total}{scene['unit']}** です。
+
+・{names[0]} は {names[1]} より **{d1}{scene['unit']} {c1}** です。
+・{names[1]} は {names[2]} より **{d2}{scene['unit']} {c2}** です。
+
 このとき、**{names[0]}** は何{scene['unit']}ですか？
 """)
 
-if st.button("ヒント（線分図）と解説を表示"):
-    st.markdown(f"""
-    **【線分図イメージ】**
-    ```text
-    {names[2]}: |----------| ({c}{scene['unit']}：基準)
-    {names[1]}: |----------|---{d2}---|
-    {names[0]}: |----------|---{d2}---|---{d1}---|
-    ```
+if st.button("ヒント（線分図）と解説を見る"):
+    st.markdown("**【パパのロジカル解説】**")
+    
+    # 簡易線分図の描画
+    st.code(f"""
+    {names[0]}: {"-" * (v0//5)} ({v0}{scene['unit']})
+    {names[1]}: {"-" * (v1//5)} ({v1}{scene['unit']})
+    {names[2]}: {"-" * (v2//5)} ({v2}{scene['unit']})
     """)
     
-    over = d2 + (d2 + d1)
-    st.write(f"① 一番少ない **{names[2]}** より「はみ出している分」の合計を計算：")
-    st.success(f" {d2} + ({d2} + {d1}) = **{over}{scene['unit']}**")
+    min_val = min(v0, v1, v2)
+    over = total - (min_val * 3)
     
-    st.write(f"② 全体から引いて、{names[2]}の3倍の値を出す：")
-    st.success(f" {total} - {over} = **{total - over}{scene['unit']}**")
-    
-    st.write(f"③ 1つ分を出し、求めたい {names[0]} を計算：")
-    st.success(f" {names[2]} ＝ {total - over} ÷ 3 = {c}{scene['unit']}\n\n {names[0]} ＝ {c} + {d2} + {d1} = **{a}{scene['unit']}**")
+    st.write(f"1. 一番少ない数に合わせて、ハミ出している分（合計 {over}{scene['unit']}）を全体から引きます。")
+    st.write(f"2. {total} - {over} = {total - over} （これが一番少ない人の3倍です）")
+    st.success(f"結果： **{names[0]} は {v0}{scene['unit']}** です！")
 
-if st.button("次の問題（シチュエーション変更）"):
-    st.session_state.q_data = generate_wasazan_3_random()
+if st.button("次の問題を生成（シチュエーションも変更）"):
+    st.session_state.q_data = generate_dynamic_wasazan()
     st.rerun()
